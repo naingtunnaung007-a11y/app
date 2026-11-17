@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard UI</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --text-color: #ffffff;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --action-bar-bg: #161b22;
+            --subtext-color: #8b949e;
+            --selection-bg: #1f242d;
+            --input-bg: #0d1117;
+            --row-bg: #0d1117;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f4f6f8;
+            --text-color: #1f2428;
+            --card-bg: #ffffff;
+            --card-border: #d0d7de;
+            --action-bar-bg: #ffffff;
+            --subtext-color: #57606a;
+            --selection-bg: #ddf4ff;
+            --input-bg: #f6f8fa;
+            --row-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-size: 16px;
+        }
+
+        body, html {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Top Action Bar */
+        .action-bar {
+            height: 72px;
+            background: var(--action-bar-bg);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--card-border);
+            flex-shrink: 0;
+            justify-content: space-between;
+            gap: 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .action-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+            flex: 1;
+            min-width: 0;
+            padding-left: 2px;
+        }
+
+        .action-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .back-btn {
+            background: rgba(128, 128, 128, 0.15);
+            border: none;
+            color: var(--text-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .back-btn:active {
+            background: rgba(128, 128, 128, 0.3);
+        }
+
+        .action-bar-title-container {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+            min-width: 0;
+            justify-content: center;
+            padding: 2px 6px 0 6px;
+        }
+
+        .action-bar-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f59e0b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+            width: 100%;
+        }
+
+        .action-bar-subtitle {
+            font-size: 0.88rem;
+            color: var(--subtext-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.3;
+            width: 100%;
+        }
+
+        /* Theme Toggle Switch */
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #30363d; transition: .3s; border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #f59e0b; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Reset Button in Header */
+        .header-reset-btn {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .header-reset-btn:active {
+            opacity: 0.8;
+        }
+
+        /* Page Layouts */
+        .page {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: var(--bg-color);
+            padding-top: 72px;
+            overflow: hidden;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        #mainPage.active {
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            padding-top: 16px;
+        }
+
+        /* Main Grid Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #111827;
+            border-radius: 18px;
+            height: 125px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+            cursor: pointer;
+        }
+
+        .card:active {
+            transform: scale(0.96);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Commission Page & Detail Page Content */
+        .commission-content, .detail-content, .tinkwet-content, .summary-content {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .recycle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            padding-bottom: 80px;
+        }
+
+        .commission-item-card, .voucher-card, .dealer-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            position: relative;
+            width: 100%;
+        }
+
+        .commission-item-card.selected, .voucher-card.selected, .dealer-card.selected {
+            border-color: #f59e0b;
+            background: var(--selection-bg);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .item-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f59e0b;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .item-subtext {
+            font-size: 0.95rem;
+            color: var(--subtext-color);
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .custom-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--subtext-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--input-bg);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .commission-item-card.selected .custom-checkbox, .voucher-card.selected .custom-checkbox, .dealer-card.selected .custom-checkbox {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            color: #111827;
+            font-weight: bold;
+        }
+
+        .selection-bar {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--selection-bg);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #f59e0b;
+            width: 100%;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .selection-bar.active {
+            display: flex;
+        }
+
+        .delete-icon-btn {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* FAB ခလုတ် */
+        .fab {
+            position: fixed !important;
+            bottom: 24px !important;
+            right: 24px !important;
+            width: 58px !important;
+            height: 58px !important;
+            background-color: #f59e0b !important;
+            color: #111827 !important;
+            border-radius: 50% !important;
+            display: none;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 32px !important;
+            font-weight: bold !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+            cursor: pointer !important;
+            z-index: 9999999 !important;
+        }
+
+        .fab.active {
+            display: flex !important;
+        }
+
+        .fab:active {
+            transform: scale(0.92);
+        }
+
+        /* Bottom Sheet Popup Keyboard UI */
+        .bottom-sheet-overlay {
+            align-items: flex-end;
+            z-index: 20000000;
+            padding: 0;
+        }
+
+        .bottom-sheet {
+            background: var(--card-bg);
+            border-top: 1px solid var(--card-border);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 10px 10px 14px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            height: 94vh;
+            max-height: 94vh;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .sheet-top-card {
+            background: #f59e0b;
+            color: #111827;
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .sheet-top-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .sheet-action-btn {
+            background: rgba(0, 0, 0, 0.15);
+            border: none;
+            height: 30px;
+            min-width: 56px;
+            padding: 0 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #111827;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sheet-action-btn:active {
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .sheet-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #111827;
+            padding: 0 4px;
+        }
+
+        .sheet-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .sheet-textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: var(--text-color);
+            width: 100%;
+            outline: none;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            resize: none;
+            height: 75px;
+            max-height: 100px;
+            overflow-y: auto;
+            font-family: inherit;
+        }
+        .sheet-textarea:focus {
+            border-color: #f59e0b;
+        }
+
+        .keypad-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .key-btn {
+            background: var(--selection-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            padding: 1px;
+            text-align: center;
+            line-height: 1.1;
+            word-break: keep-all;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .key-btn:active {
+            background: var(--card-border);
+        }
+
+        .key-btn.num-key {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #111827;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+        }
+
+        .key-btn.special-key {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #ffffff;
+            border: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+
+        .save-voucher-btn {
+            background: #f59e0b;
+            color: #111827;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            z-index: 20000000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        .dialog-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 380px;
+            max-height: 85vh;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .dialog-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            color: #f59e0b;
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            color: var(--subtext-color);
+            line-height: 1.3;
+        }
+
+        .form-input {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .form-input:focus {
+            border-color: #f59e0b;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .dialog-btn {
+            flex: 1;
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .dialog-btn.cancel { background: var(--selection-bg); color: var(--subtext-color); border: 1px solid var(--card-border); }
+        .dialog-btn.save { background: #f59e0b; color: #111827; }
+        .dialog-btn.delete { background: #dc2626; color: #ffffff; }
+
+        .paste-dialog-textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            line-height: 1.4;
+            width: 100%;
+            height: 130px;
+            resize: none;
+            outline: none;
+        }
+        .paste-dialog-textarea:focus {
+            border-color: #f59e0b;
+        }
+
+        /* လယ်ချာများ စာမျက်နှာအတွက် Two-Column Layout */
+        .ledger-layout-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 8px;
+            overflow: hidden;
+            gap: 8px;
+            position: relative;
+            min-height: 0;
+        }
+
+        .ledger-top-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .ledger-columns-wrapper {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .ledger-col-left, .ledger-col-right {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .ledger-col-header {
+            background: var(--selection-bg);
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 700;
+            color: #f59e0b;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .ledger-col-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-height: 0;
+        }
+
+        .ledger-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--row-bg);
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            gap: 4px;
+        }
+
+        .ledger-col-footer {
+            background: var(--selection-bg);
+            border-top: 1px solid var(--card-border);
+            padding: 6px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .ledger-footer-box {
+            background: var(--row-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 52px;
+            height: auto;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .footer-label {
+            font-size: 0.72rem;
+            color: var(--subtext-color);
+            line-height: 1.25;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .footer-value {
+            font-weight: bold;
+            font-size: 0.88rem;
+            line-height: 1.25;
+            word-break: break-all;
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: #0d1117;
+            padding: 10px 18px;
+            border-radius: 16px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            z-index: 30000000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 90%;
+        }
+        .toast-notification.active {
+            display: block;
+            animation: fadeInOut 2s ease;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            15% { opacity: 1; transform: translate(-50%, 0); }
+            85% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <!-- Main Page -->
+    <div id="mainPage" class="page active">
+        <div class="card-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 500px;">
+            <div class="card" onclick="openPage('ကော်မရှင်')"><div class="card-title">ကော်မရှင်</div></div>
+            <div class="card" onclick="openPage('လယ်ချာ')"><div class="card-title">လယ်ချာ</div></div>
+            <div class="card" onclick="openPage('တင်ကွက်')"><div class="card-title">တင်ကွက်</div></div>
+            <div class="card" onclick="openPage('စာရင်းချုပ်')"><div class="card-title">စာရင်းချုပ်</div></div>
+        </div>
+    </div>
+
+    <!-- Commission Page -->
+    <div id="commissionPage" class="page">
+        <div class="action-bar">
+            <div class="action-bar-left">
+                <button class="back-btn" onclick="handleHardwareBackButton()">&#10094;</button>
+                <div class="action-bar-title-container">
+                    <div class="action-bar-title">ကော်မရှင်</div>
+                </div>
+            </div>
+            <div class="action-bar-right">
+                <button class="header-reset-btn" onclick="openGlobalResetDialog()">Reset</button>
+                <label class="theme-switch">
+                    <input type="checkbox" id="themeCheckbox" onchange="toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="commission-content">
+            <div class="selection-bar" id="selectionBar">
+                <div class="all-select-wrapper" onclick="toggleSelectAllCommission()" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <div class="custom-checkbox" id="selectAllCheckbox">✓</div>
+                    <span id="selectedCountText" style="font-weight:600; color:#f59e0b; font-size:0.95rem;">0 ရွေးချယ်ထားသည်</span>
+                </div>
+                <button class="delete-icon-btn" onclick="openDeleteDialog('commission')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="recycle-list" id="recycleList"></div>
+        </div>
+    </div>
+
+    <!-- Tinkwet Page -->
+    <div id="tinkwetPage" class="page">
+        <div class="action-bar">
+            <div class="action-bar-left">
+                <button class="back-btn" onclick="handleHardwareBackButton()">&#10094;</button>
+                <div class="action-bar-title-container">
+                    <div class="action-bar-title">တင်ကွက်</div>
+                </div>
+            </div>
+            <div class="action-bar-right"></div>
+        </div>
+        <div class="tinkwet-content">
+            <div class="selection-bar" id="tinkwetSelectionBar">
+                <div class="all-select-wrapper" onclick="toggleSelectAllTinkwet()" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <div class="custom-checkbox" id="tinkwetSelectAllCheckbox">✓</div>
+                    <span id="tinkwetSelectedCountText" style="font-weight:600; color:#f59e0b; font-size:0.95rem;">0 ရွေးချယ်ထားသည်</span>
+                </div>
+                <button class="delete-icon-btn" onclick="openDeleteDialog('tinkwet')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="recycle-list" id="tinkwetRecycleList">
+                <div style="text-align:center; color:var(--subtext-color); margin-top:40px; font-size:1rem;">အချက်အလက် မရှိသေးပါ။</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ledger Main Page -->
+    <div id="voucherMainPage" class="page">
+        <div class="action-bar">
+            <div class="action-bar-left">
+                <button class="back-btn" onclick="handleHardwareBackButton()">&#10094;</button>
+                <div class="action-bar-title-container">
+                    <div class="action-bar-title">လယ်ချာများ</div>
+                </div>
+            </div>
+            <div class="action-bar-right"></div>
+        </div>
+        <div class="ledger-layout-container" id="ledgerContainer">
+            <div class="ledger-top-bar">
+                <div style="font-weight:600; color:var(--subtext-color); display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                    <span id="ledgerDateLabel" style="color:var(--text-color); font-size:0.9rem; flex-shrink:0;">15/11/2026</span>
+                    <span style="font-size:0.95rem; font-weight:bold; color:#f59e0b; flex:1; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="ledgerTimeLabel">မနက်ပိုင်း</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                    <span style="font-size:0.85rem; color:var(--subtext-color); font-weight:600;">ဘရိတ်:</span>
+                    <input type="number" id="breakLimitInput" class="form-input" style="width:72px; padding:4px 6px; font-size:0.9rem; text-align:center; border:1px solid var(--card-border); background:var(--input-bg);" value="" placeholder="မရှိ" oninput="renderLedgerMainPage()">
+                </div>
+            </div>
+            <div class="ledger-columns-wrapper">
+                <div class="ledger-col-left">
+                    <div class="ledger-col-header">ရောင်း စာရင်း</div>
+                    <div class="ledger-col-content" id="ledgerLeftColContent">
+                        <div style="text-align:center; color:var(--subtext-color); margin-top:20px; font-size:0.9rem;">အချက်အလက် မရှိသေးပါ။</div>
+                    </div>
+                    <div class="ledger-col-footer">
+                        <div class="ledger-footer-box">
+                            <span class="footer-label">အကွက်</span>
+                            <span id="leftColCount" class="footer-value" style="color:var(--text-color);">0 ကွက်</span>
+                        </div>
+                        <div class="ledger-footer-box">
+                            <span class="footer-label">ထိုးကြေး</span>
+                            <span id="leftColTotal" class="footer-value" style="color:#22c55e;">0</span>
+                        </div>
+                        <div class="ledger-footer-box" style="grid-column: span 2;">
+                            <span class="footer-label">ကော်မရှင်ခ</span>
+                            <span id="leftColCommTotal" class="footer-value" style="color:#22c55e;">0</span>
+                        </div>
+                        <div class="ledger-footer-box" style="grid-column: span 2;">
+                            <span class="footer-label">လက်ကျန်ငွေ</span>
+                            <span id="leftColNetTotal" class="footer-value" style="color:#3b82f6;">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ledger-col-right">
+                    <div class="ledger-col-header">ကာ စာရင်း</div>
+                    <div class="ledger-col-content" id="ledgerRightColContent">
+                        <div style="text-align:center; color:var(--subtext-color); margin-top:20px; font-size:0.9rem;">ကာ စာရင်း မရှိပါ။</div>
+                    </div>
+                    <div class="ledger-col-footer">
+                        <div class="ledger-footer-box">
+                            <span class="footer-label">အကွက်</span>
+                            <span id="rightColCount" class="footer-value" style="color:var(--text-color);">0 ကွက်</span>
+                        </div>
+                        <div class="ledger-footer-box">
+                            <span class="footer-label">ထိုးကြေး</span>
+                            <span id="rightColTotal" class="footer-value" style="color:#22c55e;">0</span>
+                        </div>
+                        <div class="ledger-footer-box" style="background:#f59e0b; color:#111827; grid-column: span 2; align-items:center; justify-content:center; cursor:pointer;" onclick="openAgentInputForSubmission()">
+                            <span style="font-size:0.95rem; font-weight:bold;">တင်မည်</span>
+                        </div>
+                        <div class="ledger-footer-box" style="background:var(--selection-bg); color:#f59e0b; grid-column: span 2; align-items:center; justify-content:center; cursor:pointer;" onclick="openPage('တင်ကွက်')">
+                            <span style="font-size:0.95rem; font-weight:bold;">ကာစာရင်း</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Page -->
+    <div id="summaryPage" class="page">
+        <div class="action-bar">
+            <div class="action-bar-left">
+                <button class="back-btn" onclick="handleHardwareBackButton()">&#10094;</button>
+                <div class="action-bar-title-container">
+                    <div class="action-bar-title">စာရင်းချုပ်</div>
+                </div>
+            </div>
+            <div class="action-bar-right"></div>
+        </div>
+        <div class="summary-content" style="display:flex; flex-direction:column; gap:10px; width:100%;">
+            <div style="display:flex; gap:8px; align-items:center; width:100%; flex-shrink:0;">
+                <input type="text" id="winningNumberInput" class="form-input" style="flex:1; height: 46px;" placeholder="ပေါက်ဂဏန်း (ဥပမာ - 22)" oninput="renderSummaryResults()">
+                <button class="dialog-btn save" style="width:95px; height: 46px; flex-shrink:0;" onclick="renderSummaryResults()">စစ်မည်</button>
+            </div>
+            
+            <div class="recycle-list" id="summaryResultList" style="flex:1; overflow-y:auto; width:100%; min-height:0; padding-bottom: 10px;"></div>
+
+            <div id="summaryFooterBox" style="background:var(--card-bg); border:1px solid #388bfd; border-radius:12px; padding:10px; display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; flex-shrink:0; width:100%;">
+                <div class="ledger-footer-box">
+                    <span class="footer-label">စုစုပေါင်း ရောင်းကြေး</span>
+                    <span id="sumTotalRevenue" class="footer-value" style="color:#22c55e;">0</span>
+                </div>
+                <div class="ledger-footer-box">
+                    <span class="footer-label">စုစုပေါင်း ကော်မရှင်ဆ</span>
+                    <span id="sumTotalComm" class="footer-value" style="color:#22c55e;">0</span>
+                </div>
+                <div class="ledger-footer-box">
+                    <span class="footer-label">စုစုပေါင်း လျှော်ကြေးဆ</span>
+                    <span id="sumTotalComp" class="footer-value" style="color:#ef4444;">0</span>
+                </div>
+                <div class="ledger-footer-box">
+                    <span class="footer-label">အရှုံး/အမြတ် (Net)</span>
+                    <span id="sumTotalNet" class="footer-value" style="color:#3b82f6;">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Page -->
+    <div id="detailPage" class="page">
+        <div class="action-bar">
+            <div class="action-bar-left">
+                <button class="back-btn" onclick="handleHardwareBackButton()">&#10094;</button>
+                <div class="action-bar-title-container">
+                    <div class="action-bar-title" id="detailTitle">အမည်</div>
+                    <div class="action-bar-subtitle" id="detailSubtitle">စာရင်း</div>
+                </div>
+            </div>
+            <div class="action-bar-right"></div>
+        </div>
+        <div class="detail-content">
+            <div class="selection-bar" id="detailSelectionBar">
+                <div class="all-select-wrapper" onclick="toggleSelectAllDetail()" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <div class="custom-checkbox" id="detailSelectAllCheckbox">✓</div>
+                    <span id="detailSelectedCountText" style="font-weight:600; color:#f59e0b; font-size:0.95rem;">0 ရွေးချယ်ထားသည်</span>
+                </div>
+                <button class="delete-icon-btn" onclick="openDeleteDialog('detail')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="recycle-list" id="detailRecycleList">
+                <div style="text-align:center; color:var(--subtext-color); margin-top:40px; font-size:1rem;">အချက်အလက် မရှိသေးပါ။</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Common FAB ခလုတ် -->
+    <div class="fab" id="fabBtn" onclick="handleFabClick()">+</div>
+
+    <!-- Bottom Sheet Popup Keyboard UI -->
+    <div class="overlay bottom-sheet-overlay" id="bottomSheet">
+        <div class="bottom-sheet">
+            <div class="sheet-top-card">
+                <div id="sheetDropdownDisplay" onclick="openCustomDropdown()" style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:bold; color:#111827; overflow:hidden;">
+                    <span id="sheetSelectedName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">နာမည်</span>
+                    <span style="font-size:0.85rem; flex-shrink:0;">▼</span>
+                </div>
+                <div class="sheet-top-actions">
+                    <button class="sheet-action-btn" onclick="openPasteDialog()">Paste</button>
+                    <button class="sheet-close-btn" onclick="closeOverlayUI('bottomSheet')">✕</button>
+                </div>
+            </div>
+
+            <div class="sheet-row">
+                <textarea class="sheet-textarea" id="sheetAmountInput" placeholder="ဂဏန်း ထိုးကြေး ထည့်ပါ။ (ဥပမာ - 05=1000, 24=500)"></textarea>
+            </div>
+
+            <div class="keypad-container">
+                <div class="keypad-grid" id="keypadGrid">
+                    <button class="key-btn" data-val="စုံစုံ">စုံစုံ</button>
+                    <button class="key-btn" data-val="မမ">မမ</button>
+                    <button class="key-btn" data-val="စုံမ">စုံမ</button>
+                    <button class="key-btn" data-val="မစုံ">မစုံ</button>
+                    <button class="key-btn" data-val="စုံပူး">စုံပူး</button>
+
+                    <button class="key-btn" data-val="အပါ">အပါ</button>
+                    <button class="key-btn" data-val="ကပ်">ကပ်</button>
+                    <button class="key-btn" data-val="အခွေ">အခွေ</button>
+                    <button class="key-btn" data-val="ခွေပူး">ခွေပူး</button>
+                    <button class="key-btn" data-val="မပူး">မပူး</button>
+
+                    <button class="key-btn" data-val="ညီကို">ညီကို</button>
+                    <button class="key-btn" data-val="စုံရှေ့">စုံရှေ့</button>
+                    <button class="key-btn" data-val="စုံနောက်">စုံနောက်</button>
+                    <button class="key-btn" data-val="မရှေ့">မရှေ့</button>
+                    <button class="key-btn" data-val="မနောက်">မနောက်</button>
+
+                    <button class="key-btn" data-val="အပူး">အပူး</button>
+                    <button class="key-btn num-key" data-val="1">1</button>
+                    <button class="key-btn num-key" data-val="2">2</button>
+                    <button class="key-btn num-key" data-val="3">3</button>
+                    <button class="key-btn" data-val="ပတ်">ပတ်</button>
+
+                    <button class="key-btn" data-val="ထိပ်">ထိပ်</button>
+                    <button class="key-btn num-key" data-val="4">4</button>
+                    <button class="key-btn num-key" data-val="5">5</button>
+                    <button class="key-btn num-key" data-val="6">6</button>
+                    <button class="key-btn" data-val="ပိတ်">ပိတ်</button>
+
+                    <button class="key-btn" data-val="ပါဝါ">ပါဝါ</button>
+                    <button class="key-btn num-key" data-val="7">7</button>
+                    <button class="key-btn num-key" data-val="8">8</button>
+                    <button class="key-btn num-key" data-val="9">9</button>
+                    <button class="key-btn" data-val="နက္ခတ်">နက္ခတ်</button>
+
+                    <button class="key-btn" data-val="ဘရိတ်">ဘရိတ်</button>
+                    <button class="key-btn" data-val="ဒဲ့">ဒဲ့</button>
+                    <button class="key-btn num-key" data-val="0">0</button>
+                    <button class="key-btn" data-val="အာ">အာ</button>
+                    <button class="key-btn special-key" data-val=".">.</button>
+
+                    <button class="key-btn special-key" data-val=",">,</button>
+                    <button class="key-btn special-key" data-val="00">00</button>
+                    <button class="key-btn special-key" data-val="000">000</button>
+                    <button class="key-btn special-key" data-val="×" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color:#ffffff; font-weight:bold;">×</button>
+                    <button class="key-btn special-key" data-val="All" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color:#fff; font-weight:bold;">All</button>
+                </div>
+                
+                <button class="save-voucher-btn" onclick="previewVoucherDetails()">ဘောင်ချာသို့ သိမ်းမည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paste Custom Dialog Popup -->
+    <div class="overlay" id="pasteCustomDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">စာသား Paste လုပ်ရန်</div>
+            <div style="font-size: 0.9rem; color: var(--subtext-color); line-height: 1.4;">အောက်ပါနေရာတွင် စာသားများ Paste လုပ်ပါ (သို့) ကလစ်ဘုတ်မှ အလိုအလျောက် ယူမည်။</div>
+            <textarea class="paste-dialog-textarea" id="pasteDialogInput" placeholder="ဤနေရာတွင် Paste ချပါ..."></textarea>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('pasteCustomDialog')">မလုပ်တော့ပါ</button>
+                <button class="dialog-btn save" onclick="confirmAndCleanPasteData()">စာရင်းသွင်းမည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Dropdown Selection Dialog -->
+    <div class="overlay" id="customDropdownDialog">
+        <div class="dialog-box" style="max-height: 75vh;">
+            <div class="dialog-title">ကော်မရှင် ရွေးချယ်ရန်</div>
+            <div id="customDropdownList" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; min-height:0;"></div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('customDropdownDialog')" style="width:100%;">ပိတ်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Voucher Dialog -->
+    <div class="overlay" id="previewVoucherDialog">
+        <div class="dialog-box">
+            <div class="dialog-title" id="pvPlayerName">ထိုးသားအမည်</div>
+            <div id="pvSummaryBar" style="display:flex; justify-content:space-between; background:var(--selection-bg); padding:10px 14px; border-radius:8px; font-size:1rem; color:#f59e0b; flex-shrink:0;">
+                <span><strong style="font-size:1.1rem; color:var(--text-color); font-weight:bold;">0 ကွက်</strong></span>
+                <span><strong style="font-size:1.1rem; color:#22c55e; font-weight:bold;">0</strong></span>
+            </div>
+            <div id="pvContentList" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1; padding-right:4px; min-height:100px; max-height:42vh;"></div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('previewVoucherDialog')">ပြင်မည်</button>
+                <button class="dialog-btn save" onclick="confirmAndSaveVoucher()">ထည့်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voucher Detail Dialog -->
+    <div class="overlay" id="voucherDetailDialog">
+        <div class="dialog-box">
+            <div class="dialog-title" id="vdPlayerName">ထိုးသားအမည်</div>
+            <div id="vdSummaryBar" style="display:flex; justify-content:space-between; background:var(--selection-bg); padding:10px 14px; border-radius:8px; font-size:1rem; color:#f59e0b; flex-shrink:0;">
+                <span><strong style="font-size:1.1rem; color:var(--text-color); font-weight:bold;">0 ကွက်</strong></span>
+                <span><strong style="font-size:1.1rem; color:#22c55e; font-weight:bold;">0</strong></span>
+            </div>
+            <div id="vdContentList" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1; padding-right:4px; min-height:100px; max-height:42vh;"></div>
+            <div class="dialog-buttons" style="display: flex; gap: 8px;">
+                <button class="dialog-btn save" onclick="closeOverlayUI('voucherDetailDialog')" style="flex:1;">ပိတ်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Custom Input Dialog for Submitting to Dealer -->
+    <div class="overlay" id="agentInputCustomDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">ဒိုင်အမည် ထည့်သွင်းရန်</div>
+            <div class="form-group">
+                <label class="form-label">တင်မည့် ဒိုင်အမည် ရိုက်ထည့်ပါ</label>
+                <input type="text" id="customDealerNameInput" class="form-input" placeholder="ဥပမာ - ကိုကြီးကျော်">
+            </div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('agentInputCustomDialog')">မလုပ်တော့ပါ</button>
+                <button class="dialog-btn save" onclick="confirmSubmitToCustomDealer()">တင်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dealer Details Dialog -->
+    <div class="overlay" id="dealerDetailsDialog">
+        <div class="dialog-box">
+            <div class="dialog-title" id="ddDialogTitle">ဒိုင်အမည် (အသေးစိတ်)</div>
+            <div id="ddDateTimeLabel" style="font-size:0.9rem; color:var(--subtext-color); text-align:center; margin-bottom:-4px; flex-shrink:0;"></div>
+            <div id="ddSummaryBar" style="display:flex; justify-content:space-between; background:var(--selection-bg); padding:10px 14px; border-radius:8px; font-size:1rem; color:#f59e0b; flex-shrink:0;">
+                <span><strong style="font-size:1.1rem; color:var(--text-color); font-weight:bold;" id="ddTotalCount">0 ကွက်</strong></span>
+                <span><strong style="font-size:1.1rem; color:#22c55e; font-weight:bold;" id="ddTotalAmt">0</strong></span>
+            </div>
+            <div id="ddContentList" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1; padding-right:4px; min-height:100px; max-height:38vh;"></div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn save" onclick="closeOverlayUI('dealerDetailsDialog')" style="width:100%;">ပိတ်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Commission Dialog -->
+    <div class="overlay" id="addCommissionDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">ကော်မရှင် အသစ်ထည့်ရန်</div>
+            <div class="form-group">
+                <label class="form-label">ဥပမာ - မြမြ1580, ဦးတင့်1580</label>
+                <input type="text" id="inputCommName" class="form-input" placeholder="အမည်နှင့် နံပါတ် ၄ လုံး">
+            </div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('addCommissionDialog')">မလုပ်တော့ပါ</button>
+                <button class="dialog-btn save" onclick="saveCommission()">သိမ်းမည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Reset Confirmation Dialog -->
+    <div class="overlay" id="globalResetDialog">
+        <div class="dialog-box">
+            <div class="dialog-title" style="color:#dc2626;">အချက်အလက်အားလုံး ဖျက်ရန်</div>
+            <div style="font-size:0.95rem; color:var(--text-color); text-align:center; padding: 6px 0; line-height: 1.5;">
+                ကော်မရှင်တိုင်း၏ ရောင်းထားသော ဒေတာများနှင့် တင်ကွက်များအားလုံးကို အပြီးအပိုင် ဖျက်မှာ သေချာပါသလား?
+            </div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('globalResetDialog')">မဖျက်ပါ</button>
+                <button class="dialog-btn delete" onclick="confirmGlobalReset()">ဖျက်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Dialog -->
+    <div class="overlay" id="alertDialog">
+        <div class="dialog-box">
+            <div class="dialog-title" style="color:#f59e0b;">သတိပေးချက်</div>
+            <div id="alertMessage" style="font-size:0.95rem; color:var(--text-color); text-align:center; padding: 6px 0; line-height: 1.5;">
+                ကျေးဇူးပြု၍ အချက်အလက် ဖြည့်စွက်ပါ။
+            </div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn save" onclick="closeOverlayUI('alertDialog')" style="width:100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <div class="overlay" id="deleteDialog">
+        <div class="dialog-box">
+            <div class="dialog-title" id="deleteDialogTitle">ဖျက်မှာ သေချာပါသလား?</div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeOverlayUI('deleteDialog')">မဖျက်ပါ</button>
+                <button class="dialog-btn delete" onclick="confirmDelete()">ဖျက်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toastNotification">Clipboard သို့ ကူးယူပြီးပါပြီ</div>
+
+    <script>
+        let commissionList = JSON.parse(localStorage.getItem('commissionList')) || [
+            { id: 1, name: 'ဦးတင့်', comm: '15%', comp: '80' },
+            { id: 2, name: 'Mya', comm: '15%', comp: '80' },
+            { id: 3, name: 'စျေး', comm: '15%', comp: '80' },
+            { id: 4, name: 'AungKo', comm: '15%', comp: '80' },
+            { id: 5, name: 'ဦးမြ', comm: '15%', comp: '80' }
+        ];
+
+        let defaultSampleRecords = [
+            { playerName: 'စာရင်း', amount: 'စုံစုံ=2000, 05=4000, ပါဝါ=1000', timeLabel: 'မနက်ပိုင်း (10:32 AM)' },
+            { playerName: 'စာရင်း', amount: 'မမ=1500, 16=2000, 23ဒဲ့4000အာ100', timeLabel: 'မနက်ပိုင်း (10:35 AM)' }
+        ];
+
+        let storedVouchers = JSON.parse(localStorage.getItem('voucherRecords'));
+        let voucherRecords = {};
+
+        commissionList.forEach(item => {
+            if (storedVouchers && storedVouchers[item.name]) {
+                voucherRecords[item.name] = storedVouchers[item.name];
+            } else {
+                voucherRecords[item.name] = JSON.parse(JSON.stringify(defaultSampleRecords));
+            }
+        });
+
+        let submittedDealerRecords = JSON.parse(localStorage.getItem('submittedDealerRecords')) || {};
+
+        let currentActivePage = 'main';
+        let currentDetailName = '';
+        let currentSelectedAgentForSheet = '';
+        
+        let selectedCommissionIds = [];
+        let isCommissionSelectionMode = false;
+
+        let selectedDetailIndices = [];
+        let isDetailSelectionMode = false;
+
+        let selectedTinkwetIndices = [];
+        let isTinkwetSelectionMode = false;
+
+        let deleteTargetType = '';
+
+        // ============================================================
+        // Android WebView (file://) & Hardware Back Button Fix
+        // ============================================================
+        let pageStack = ['main'];
+        let overlayStack = [];
+        let isInternalBack = false;
+
+        // file:// URL တွင် Hash (#) မသုံးဘဲ null သုံးမှသာ WebView canGoBack() အလုပ်လုပ်မည်
+        function initWebViewHistory() {
+            try {
+                window.history.replaceState({ depth: 0 }, '', null);
+                window.history.pushState({ depth: 1 }, '', null);
+                window.history.pushState({ depth: 2 }, '', null);
+            } catch (e) {}
+        }
+
+        if (document.readyState === 'complete') {
+            initWebViewHistory();
+        } else {
+            window.addEventListener('load', initWebViewHistory);
+        }
+
+        // Hardware Back Button (popstate) Listener
+        window.addEventListener('popstate', function(event) {
+            if (isInternalBack) {
+                isInternalBack = false;
+                return;
+            }
+
+            // နောက်ပြန်ဆုတ်ခွင့် အမြဲရှိနေစေရန် History Buffer ပြန်ဖြည့်ထားခြင်း
+            try {
+                window.history.pushState({ depth: Date.now() }, '', null);
+            } catch (e) {}
+
+            processBackAction();
+        });
+
+        // Native Android APK Wrapper များမှ တိုက်ရိုက်ခေါ်နိုင်ရန် Global Function များ ချိတ်ဆက်ခြင်း
+        window.onBackPressed = function() { return processBackAction(); };
+        window.goBack = function() { return processBackAction(); };
+        window.handleBack = function() { return processBackAction(); };
+
+        function processBackAction() {
+            // ၁။ Dialog / Bottom Sheet / Popup တွေ ပွင့်နေရင် အရင်ဆုံး ပိတ်မည်
+            if (overlayStack.length > 0) {
+                const topOverlayId = overlayStack.pop();
+                const el = document.getElementById(topOverlayId);
+                if (el) el.classList.remove('active');
+                return true;
+            }
+
+            // ၂။ Multi-select Mode တွေ ပွင့်နေရင် အရင်ဆုံး ပိတ်မည်
+            if (currentActivePage === 'commission' && isCommissionSelectionMode) {
+                isCommissionSelectionMode = false;
+                selectedCommissionIds = [];
+                renderRecycleView();
+                return true;
+            }
+            if (currentActivePage === 'detail' && isDetailSelectionMode) {
+                isDetailSelectionMode = false;
+                selectedDetailIndices = [];
+                renderDetailVouchers(currentDetailName);
+                return true;
+            }
+            if (currentActivePage === 'tinkwet' && isTinkwetSelectionMode) {
+                isTinkwetSelectionMode = false;
+                selectedTinkwetIndices = [];
+                renderTinkwetPage();
+                return true;
+            }
+
+            // ၃။ အတွင်း Page တွေထဲ ရောက်နေရင် အရင် Page ကို ပြန်ဆုတ်မည်
+            if (pageStack.length > 1) {
+                pageStack.pop();
+                const prevPage = pageStack[pageStack.length - 1];
+                renderPageUI(prevPage, false);
+                return true;
+            }
+
+            // ၄။ Main Page မှာပဲ ရှိနေရင် App အပြင် မထွက်သွားအောင် တားဆီးမည်
+            showToast('ပင်မစာမျက်နှာသို့ ရောက်ရှိနေပါသည်');
+            return false;
+        }
+
+        // Screen ပေါ်က Back ခလုတ် (<) ကို နှိပ်လျှင်
+        function handleHardwareBackButton() {
+            triggerVibration();
+            processBackAction();
+        }
+
+        // Dialog / Popup ဖွင့်သည့် Function
+        function openOverlayUI(overlayId) {
+            const el = document.getElementById(overlayId);
+            if (!el) return;
+            if (!overlayStack.includes(overlayId)) {
+                overlayStack.push(overlayId);
+                el.classList.add('active');
+                try {
+                    window.history.pushState({ depth: Date.now() }, '', null);
+                } catch (e) {}
+            }
+        }
+
+        // Dialog / Popup ပိတ်သည့် Function
+        function closeOverlayUI(overlayId) {
+            const el = document.getElementById(overlayId);
+            if (el && el.classList.contains('active')) {
+                el.classList.remove('active');
+                overlayStack = overlayStack.filter(id => id !== overlayId);
+            }
+        }
+
+        function closeAllOverlaysUI() {
+            while (overlayStack.length > 0) {
+                const id = overlayStack.pop();
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('active');
+            }
+        }
+
+        // Theme Initialization
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLight = savedTheme === 'light';
+            if (document.getElementById('themeCheckbox')) document.getElementById('themeCheckbox').checked = isLight;
+        });
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            const isLight = newTheme === 'light';
+            if (document.getElementById('themeCheckbox')) document.getElementById('themeCheckbox').checked = isLight;
+        }
+
+        function saveDataToStorage() {
+            localStorage.setItem('commissionList', JSON.stringify(commissionList));
+            localStorage.setItem('voucherRecords', JSON.stringify(voucherRecords));
+            localStorage.setItem('submittedDealerRecords', JSON.stringify(submittedDealerRecords));
+        }
+
+        function triggerVibration() {
+            if ("vibrate" in navigator) {
+                navigator.vibrate(40);
+            }
+        }
+
+        document.addEventListener('click', function() {
+            triggerVibration();
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toastNotification');
+            t.innerText = msg;
+            t.classList.add('active');
+            setTimeout(() => {
+                t.classList.remove('active');
+            }, 2000);
+        }
+
+        function renderPageUI(pageName, shouldPushHistory = true) {
+            closeAllOverlaysUI();
+
+            document.getElementById('mainPage').classList.remove('active');
+            document.getElementById('commissionPage').classList.remove('active');
+            document.getElementById('tinkwetPage').classList.remove('active');
+            document.getElementById('voucherMainPage').classList.remove('active');
+            document.getElementById('summaryPage').classList.remove('active');
+            document.getElementById('detailPage').classList.remove('active');
+            document.getElementById('fabBtn').classList.remove('active');
+
+            if (pageName === 'main') {
+                currentActivePage = 'main';
+                isCommissionSelectionMode = false;
+                selectedCommissionIds = [];
+                isDetailSelectionMode = false;
+                selectedDetailIndices = [];
+                isTinkwetSelectionMode = false;
+                selectedTinkwetIndices = [];
+                document.getElementById('mainPage').classList.add('active');
+            } else if (pageName === 'commission') {
+                currentActivePage = 'commission';
+                isCommissionSelectionMode = false;
+                selectedCommissionIds = [];
+                document.getElementById('commissionPage').classList.add('active');
+                document.getElementById('fabBtn').classList.add('active');
+                renderRecycleView();
+            } else if (pageName === 'tinkwet') {
+                currentActivePage = 'tinkwet';
+                isTinkwetSelectionMode = false;
+                selectedTinkwetIndices = [];
+                document.getElementById('tinkwetPage').classList.add('active');
+                renderTinkwetPage();
+            } else if (pageName === 'voucherMain') {
+                currentActivePage = 'voucherMain';
+                document.getElementById('voucherMainPage').classList.add('active');
+                renderLedgerMainPage();
+            } else if (pageName === 'summary') {
+                currentActivePage = 'summary';
+                document.getElementById('summaryPage').classList.add('active');
+                renderSummaryResults();
+            } else if (pageName.startsWith('detail:')) {
+                currentActivePage = 'detail';
+                const parts = pageName.split(':');
+                currentDetailName = parts[1];
+                let subtitle = parts.slice(2).join(':');
+                isDetailSelectionMode = false;
+                selectedDetailIndices = [];
+                document.getElementById('detailTitle').innerText = currentDetailName;
+                document.getElementById('detailSubtitle').innerText = subtitle || '';
+                document.getElementById('detailPage').classList.add('active');
+
+                const isCommissionItem = commissionList.some(item => item.name === currentDetailName);
+                if (isCommissionItem) {
+                    document.getElementById('fabBtn').classList.add('active');
+                }
+                renderDetailVouchers(currentDetailName);
+            }
+
+            if (shouldPushHistory) {
+                try {
+                    window.history.pushState({ depth: Date.now() }, '', null);
+                } catch (e) {}
+            }
+        }
+
+        function openPage(title) {
+            let pageName = '';
+            if (title === 'ကော်မရှင်') pageName = 'commission';
+            else if (title === 'လယ်ချာ') pageName = 'voucherMain';
+            else if (title === 'တင်ကွက်') pageName = 'tinkwet';
+            else if (title === 'စာရင်းချုပ်') pageName = 'summary';
+
+            if (pageName) {
+                pageStack.push(pageName);
+                renderPageUI(pageName, true);
+            }
+        }
+
+        function openDetailPage(title, subtitle) {
+            let pageName = `detail:${title}:${subtitle || ''}`;
+            pageStack.push(pageName);
+            renderPageUI(pageName, true);
+        }
+
+        function renderLedgerMainPage() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = now.getHours();
+            const timeLabel = (hours < 12) ? 'မနက်ပိုင်း' : 'ညနေပိုင်း';
+            document.getElementById('ledgerDateLabel').innerText = `${day}/${month}/${year}`;
+            document.getElementById('ledgerTimeLabel').innerText = timeLabel;
+
+            const leftContent = document.getElementById('ledgerLeftColContent');
+            const rightContent = document.getElementById('ledgerRightColContent');
+            leftContent.innerHTML = '';
+            rightContent.innerHTML = '';
+
+            let allParsedMap = new Map();
+            let totalRevenue = 0;
+            let totalCommission = 0;
+
+            Object.keys(voucherRecords).forEach(agentName => {
+                let recs = voucherRecords[agentName] || [];
+                let commRate = 15;
+                let foundComm = commissionList.find(c => c.name === agentName);
+                if (foundComm && foundComm.comm) {
+                    commRate = parseFloat(foundComm.comm) || 15;
+                }
+
+                recs.forEach(rec => {
+                    let parsed = parse2DBetToNumbers(rec.amount);
+                    let agentRecTotal = 0;
+                    parsed.forEach(item => {
+                        agentRecTotal += item.bet;
+                        totalRevenue += item.bet;
+                        if (allParsedMap.has(item.num)) {
+                            allParsedMap.set(item.num, allParsedMap.get(item.num) + item.bet);
+                        } else {
+                            allParsedMap.set(item.num, item.bet);
+                        }
+                    });
+                    totalCommission += (agentRecTotal * commRate) / 100;
+                });
+            });
+
+            let sortedEntries = Array.from(allParsedMap.entries()).sort((a, b) => b[1] - a[1]);
+
+            if (sortedEntries.length === 0) {
+                leftContent.innerHTML = '<div style="text-align:center; color:var(--subtext-color); margin-top:20px; font-size:0.9rem;">အချက်အလက် မရှိသေးပါ။</div>';
+            } else {
+                sortedEntries.forEach(([num, amt]) => {
+                    const row = document.createElement('div');
+                    row.className = 'ledger-item-row';
+                    row.innerHTML = `<span style="color:#f59e0b; font-weight:bold;">${num}</span><span style="color:#22c55e; font-weight:600;">${amt.toLocaleString()}</span>`;
+                    leftContent.appendChild(row);
+                });
+            }
+
+            document.getElementById('leftColCount').innerText = `${sortedEntries.length} ကွက်`;
+            document.getElementById('leftColTotal').innerText = totalRevenue.toLocaleString();
+            document.getElementById('leftColCommTotal').innerText = totalCommission.toLocaleString();
+            let netTotal = totalRevenue - totalCommission;
+            document.getElementById('leftColNetTotal').innerText = netTotal.toLocaleString();
+
+            let breakLimitInputVal = document.getElementById('breakLimitInput').value.trim();
+            let hasBreakLimit = breakLimitInputVal !== '' && !isNaN(breakLimitInputVal);
+            let breakLimit = hasBreakLimit ? parseFloat(breakLimitInputVal) : Infinity;
+
+            let overflowBets = [];
+
+            sortedEntries.forEach(([num, amt]) => {
+                if (hasBreakLimit && amt > breakLimit) {
+                    let overflowAmt = amt - breakLimit;
+                    overflowBets.push({ num: num, bet: overflowAmt });
+                }
+            });
+
+            let submittedOverflowMap = new Map();
+            Object.keys(submittedDealerRecords).forEach(dealerName => {
+                let recs = submittedDealerRecords[dealerName] || [];
+                recs.forEach(r => {
+                    r.bets.forEach(b => {
+                        submittedOverflowMap.set(b.num, (submittedOverflowMap.get(b.num) || 0) + b.bet);
+                    });
+                });
+            });
+
+            let activeOverflowBets = [];
+            overflowBets.forEach(item => {
+                let alreadySubmitted = submittedOverflowMap.get(item.num) || 0;
+                let remainingBet = item.bet - alreadySubmitted;
+                if (remainingBet > 0) {
+                    activeOverflowBets.push({ num: item.num, bet: remainingBet });
+                }
+            });
+
+            let currentOverflow = window.tempClearedOverflow !== undefined ? window.tempClearedOverflow : (hasBreakLimit ? activeOverflowBets : sortedEntries.map(e => ({ num: e[0], bet: e[1] })));
+
+            let rightTotalAmt = 0;
+            if (currentOverflow.length === 0) {
+                rightContent.innerHTML = '<div style="text-align:center; color:var(--subtext-color); margin-top:20px; font-size:0.9rem;">ကာ စာရင်း မရှိပါ။</div>';
+            } else {
+                currentOverflow.forEach(item => {
+                    rightTotalAmt += item.bet;
+                    const row = document.createElement('div');
+                    row.className = 'ledger-item-row';
+                    row.style.cursor = 'pointer';
+                    row.innerHTML = `<span style="color:#f59e0b; font-weight:bold;">${item.num}</span><span style="color:#22c55e; font-weight:600;">${item.bet.toLocaleString()}</span>`;
+                    rightContent.appendChild(row);
+                });
+            }
+
+            document.getElementById('rightColCount').innerText = `${currentOverflow.length} ကွက်`;
+            document.getElementById('rightColTotal').innerText = rightTotalAmt.toLocaleString();
+
+            window.currentOverflowBets = currentOverflow;
+            window.currentRightTotalAmt = rightTotalAmt;
+        }
+
+        function renderSummaryResults() {
+            const winInput = document.getElementById('winningNumberInput').value.trim();
+            const listEl = document.getElementById('summaryResultList');
+            listEl.innerHTML = '';
+
+            let grandRevenue = 0;
+            let grandCommTotal = 0;
+            let grandCompTotal = 0;
+
+            commissionList.forEach(commItem => {
+                let agentName = commItem.name;
+                let commRateVal = commItem.comm; 
+                let compRateVal = commItem.comp; 
+                
+                let commRateNum = parseFloat(commRateVal) || 15;
+                let compRateNum = parseFloat(compRateVal) || 80;
+
+                let agentRecs = voucherRecords[agentName] || [];
+                let agentTotalRev = 0;
+                let agentHitBet = 0;
+
+                agentRecs.forEach(rec => {
+                    let parsed = parse2DBetToNumbers(rec.amount);
+                    parsed.forEach(item => {
+                        agentTotalRev += item.bet;
+                        if (winInput !== '' && item.num === winInput) {
+                            agentHitBet += item.bet;
+                        }
+                    });
+                });
+
+                grandRevenue += agentTotalRev;
+                let agentCommAmt = (agentTotalRev * commRateNum) / 100;
+                grandCommTotal += agentCommAmt;
+
+                let agentCompAmt = 0;
+                if (winInput !== '' && agentHitBet > 0) {
+                    agentCompAmt = agentHitBet * compRateNum;
+                }
+                grandCompTotal += agentCompAmt;
+
+                let agentNetProfitLoss = agentTotalRev - agentCommAmt - agentCompAmt;
+
+                const card = document.createElement('div');
+                card.className = 'commission-item-card';
+                card.style.cssText = 'background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; width:100%;';
+
+                card.innerHTML = `
+                    <div style="font-size:1.1rem; font-weight:700; color:#f59e0b; border-bottom:1px solid var(--card-border); padding-bottom:6px; width:100%; word-break:break-word;">
+                        ${agentName}
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; width:100%;">
+                        <div class="ledger-footer-box" style="background:var(--row-bg);">
+                            <span class="footer-label">ရောင်းကြေး</span>
+                            <span class="footer-value" style="color:#22c55e;">${agentTotalRev.toLocaleString()}</span>
+                        </div>
+                        <div class="ledger-footer-box" style="background:var(--row-bg);">
+                            <span class="footer-label">ကော်မရှင်ဆ (${commRateVal})</span>
+                            <span class="footer-value" style="color:#22c55e;">${agentCommAmt.toLocaleString()}</span>
+                        </div>
+                        <div class="ledger-footer-box" style="background:var(--row-bg);">
+                            <span class="footer-label">လျှော်ကြေးဆ (${winInput !== '' ? agentHitBet.toLocaleString() : '0'})</span>
+                            <span class="footer-value" style="color:#ef4444;">${agentCompAmt.toLocaleString()}</span>
+                        </div>
+                        <div class="ledger-footer-box" style="background:var(--row-bg);">
+                            <span class="footer-label">အရှုံး/အမြတ် (Net)</span>
+                            <span class="footer-value" style="color:${agentNetProfitLoss >= 0 ? '#22c55e' : '#ef4444'};">${agentNetProfitLoss.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+
+            document.getElementById('sumTotalRevenue').innerText = grandRevenue.toLocaleString();
+            document.getElementById('sumTotalComm').innerText = grandCommTotal.toLocaleString();
+            document.getElementById('sumTotalComp').innerText = grandCompTotal.toLocaleString();
+
+            let netProfitLoss = grandRevenue - grandCommTotal - grandCompTotal;
+            const netEl = document.getElementById('sumTotalNet');
+            netEl.innerText = netProfitLoss.toLocaleString();
+            netEl.style.color = netProfitLoss >= 0 ? '#22c55e' : '#ef4444';
+        }
+
+        function openAgentInputForSubmission() {
+            const overflowBets = window.currentOverflowBets || [];
+            if (overflowBets.length === 0) {
+                showCustomAlert('တင်ရန် ကာစာရင်း မရှိပါ။');
+                return;
+            }
+            document.getElementById('customDealerNameInput').value = '';
+            openOverlayUI('agentInputCustomDialog');
+        }
+
+        function confirmSubmitToCustomDealer() {
+            const dealerName = document.getElementById('customDealerNameInput').value.trim();
+            if (!dealerName) {
+                showCustomAlert('ကျေးဇူးပြု၍ ဒိုင်အမည် ထည့်သွင်းပါ');
+                return;
+            }
+            closeOverlayUI('agentInputCustomDialog');
+
+            const overflowBets = window.currentOverflowBets || [];
+            const totalAmt = window.currentRightTotalAmt || 0;
+            const count = overflowBets.length;
+
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = now.getHours();
+            const timeStr = (hours < 12) ? 'မနက်ပိုင်း' : 'ညနေပိုင်း';
+            const dateTimeStr = `${day}/${month}/${year} ${timeStr}`;
+
+            if (!submittedDealerRecords[dealerName]) {
+                submittedDealerRecords[dealerName] = [];
+            }
+            submittedDealerRecords[dealerName].push({
+                dateTime: dateTimeStr,
+                bets: [...overflowBets],
+                totalAmt: totalAmt,
+                count: count
+            });
+            saveDataToStorage();
+
+            let textLines = [];
+            textLines.push(`${day}.${month}.${year}`);
+            textLines.push(timeStr);
+            overflowBets.forEach(b => {
+                textLines.push(`${b.num}=${b.bet}`);
+            });
+            textLines.push('---------------');
+            textLines.push(totalAmt.toLocaleString());
+            textLines.push(`(${count} ကွက်)`);
+            textLines.push('');
+            textLines.push(`${dealerName} မှ ကာသည်။`);
+
+            const finalClipboardText = textLines.join('\n');
+
+            navigator.clipboard.writeText(finalClipboardText).then(() => {
+                showToast('Clipboard သို့ ကူးယူပြီးပါပြီ (Viber တွင် Paste ချနိုင်သည်)');
+            }).catch(err => {
+                showToast('Clipboard တွင် ကူးယူ၍မရပါ');
+            });
+
+            window.tempClearedOverflow = [];
+            renderLedgerMainPage();
+        }
+
+        function openDealerDetailsDialog(dealerName) {
+            document.getElementById('ddDialogTitle').innerText = `${dealerName} (အသေးစိတ်)`;
+            
+            const records = submittedDealerRecords[dealerName] || [];
+            const contentList = document.getElementById('ddContentList');
+            contentList.innerHTML = '';
+
+            let allBetsMap = new Map();
+            let grandTotalAmt = 0;
+
+            records.forEach(r => {
+                grandTotalAmt += r.totalAmt;
+                r.bets.forEach(b => {
+                    if (allBetsMap.has(b.num)) {
+                        allBetsMap.set(b.num, allBetsMap.get(b.num) + b.bet);
+                    } else {
+                        allBetsMap.set(b.num, b.bet);
+                    }
+                });
+            });
+
+            let combinedBets = Array.from(allBetsMap.entries());
+
+            if (records.length > 0) {
+                document.getElementById('ddDateTimeLabel').innerText = `ရက်စွဲ: ${records[0].dateTime} (${records.length} ကြိမ်)`;
+            } else {
+                document.getElementById('ddDateTimeLabel').innerText = '';
+            }
+
+            combinedBets.forEach(([num, amt]) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; background:var(--row-bg); padding:8px 12px; border-radius:6px; border:1px solid var(--card-border); font-size:0.95rem;';
+                row.innerHTML = `<span style="color:#f59e0b; font-weight:bold;">${num}</span><span style="color:#22c55e; font-weight:600;">${amt.toLocaleString()}</span>`;
+                contentList.appendChild(row);
+            });
+
+            document.getElementById('ddTotalCount').innerText = `${combinedBets.length} ကွက်`;
+            document.getElementById('ddTotalAmt').innerText = grandTotalAmt.toLocaleString();
+
+            openOverlayUI('dealerDetailsDialog');
+        }
+
+        function renderTinkwetPage() {
+            const listEl = document.getElementById('tinkwetRecycleList');
+            listEl.innerHTML = '';
+
+            const dealerNames = Object.keys(submittedDealerRecords);
+            if (dealerNames.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:var(--subtext-color); margin-top:40px; font-size:1rem;">တင်ထားသော ဒိုင်စာရင်း မရှိသေးပါ။</div>';
+                document.getElementById('tinkwetSelectionBar').classList.remove('active');
+                isTinkwetSelectionMode = false;
+                return;
+            }
+
+            dealerNames.forEach((dealerName, index) => {
+                let records = submittedDealerRecords[dealerName] || [];
+                let totalBetsCount = 0;
+                let totalDealerAmt = 0;
+                let lastDateTime = '';
+                records.forEach(r => {
+                    totalBetsCount += r.count;
+                    totalDealerAmt += r.totalAmt;
+                    lastDateTime = r.dateTime;
+                });
+
+                const isSelected = selectedTinkwetIndices.includes(index);
+                const card = document.createElement('div');
+                card.className = 'voucher-card' + (isSelected ? ' selected' : '');
+
+                let pressTimer = null;
+                let isLongPress = false;
+                let startX = 0, startY = 0;
+
+                card.addEventListener('touchstart', (e) => {
+                    isLongPress = false;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        triggerVibration();
+                        isTinkwetSelectionMode = true;
+                        if (!selectedTinkwetIndices.includes(index)) selectedTinkwetIndices.push(index);
+                        renderTinkwetPage();
+                    }, 500);
+                });
+
+                card.addEventListener('touchmove', (e) => {
+                    if (!pressTimer) return;
+                    if (Math.abs(e.touches[0].clientX - startX) > 10 || Math.abs(e.touches[0].clientY - startY) > 10) {
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                    }
+                });
+
+                card.addEventListener('touchend', () => {
+                    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                });
+
+                card.addEventListener('mousedown', (e) => {
+                    isLongPress = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        triggerVibration();
+                        isTinkwetSelectionMode = true;
+                        if (!selectedTinkwetIndices.includes(index)) selectedTinkwetIndices.push(index);
+                        renderTinkwetPage();
+                    }, 500);
+                });
+
+                card.addEventListener('mouseup', () => {
+                    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                });
+
+                card.onclick = () => {
+                    if (isLongPress) return;
+                    if (isTinkwetSelectionMode) {
+                        if (selectedTinkwetIndices.includes(index)) {
+                            selectedTinkwetIndices = selectedTinkwetIndices.filter(i => i !== index);
+                            if (selectedTinkwetIndices.length === 0) isTinkwetSelectionMode = false;
+                        } else {
+                            selectedTinkwetIndices.push(index);
+                        }
+                        renderTinkwetPage();
+                    } else {
+                        openDealerDetailsDialog(dealerName);
+                    }
+                };
+
+                card.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">${dealerName}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="color:#22c55e; font-weight:700; font-size:1.1rem;">${totalDealerAmt.toLocaleString()}</span>
+                            ${isTinkwetSelectionMode ? `<div class="custom-checkbox">${isSelected ? '✓' : ''}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="item-subtext" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                        <span>${lastDateTime} (${records.length} ကြိမ်)</span>
+                        <span style="color:#f59e0b; font-weight:600;">${totalBetsCount} ကွက်</span>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+
+            const bar = document.getElementById('tinkwetSelectionBar');
+            const countText = document.getElementById('tinkwetSelectedCountText');
+            const selectAllCheckbox = document.getElementById('tinkwetSelectAllCheckbox');
+
+            if (isTinkwetSelectionMode && selectedTinkwetIndices.length > 0) {
+                bar.classList.add('active');
+                countText.innerText = `${selectedTinkwetIndices.length} ခု ရွေးချယ်ထားသည်`;
+                if (selectedTinkwetIndices.length === dealerNames.length) {
+                    selectAllCheckbox.innerText = '✓';
+                    selectAllCheckbox.style.background = '#f59e0b';
+                } else {
+                    selectAllCheckbox.innerText = '-';
+                    selectAllCheckbox.style.background = '#f59e0b';
+                }
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        function toggleSelectAllTinkwet() {
+            const dealerNames = Object.keys(submittedDealerRecords);
+            if (selectedTinkwetIndices.length === dealerNames.length) {
+                selectedTinkwetIndices = [];
+                isTinkwetSelectionMode = false;
+            } else {
+                selectedTinkwetIndices = dealerNames.map((_, idx) => idx);
+                isTinkwetSelectionMode = true;
+            }
+            renderTinkwetPage();
+        }
+
+        function calculateAgentTotal(agentName) {
+            const records = voucherRecords[agentName] || [];
+            let total = 0;
+            records.forEach(rec => {
+                const parsed = parse2DBetToNumbers(rec.amount);
+                parsed.forEach(item => {
+                    total += item.bet;
+                });
+            });
+            return total;
+        }
+
+        function renderRecycleView() {
+            const listEl = document.getElementById('recycleList');
+            listEl.innerHTML = '';
+
+            if (commissionList.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:var(--subtext-color); margin-top:40px; font-size:1rem;">အချက်အလက် မရှိသေးပါ။</div>';
+                document.getElementById('selectionBar').classList.remove('active');
+                isCommissionSelectionMode = false;
+                return;
+            }
+
+            commissionList.forEach((item) => {
+                const card = document.createElement('div');
+                const isSelected = selectedCommissionIds.includes(item.id);
+                card.className = 'commission-item-card' + (isSelected ? ' selected' : '');
+                
+                let pressTimer = null;
+                let isLongPress = false;
+                let startX = 0, startY = 0;
+
+                card.addEventListener('touchstart', (e) => {
+                    isLongPress = false;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        triggerVibration();
+                        isCommissionSelectionMode = true;
+                        if (!selectedCommissionIds.includes(item.id)) selectedCommissionIds.push(item.id);
+                        renderRecycleView();
+                    }, 500);
+                });
+
+                card.addEventListener('touchmove', (e) => {
+                    if (!pressTimer) return;
+                    if (Math.abs(e.touches[0].clientX - startX) > 10 || Math.abs(e.touches[0].clientY - startY) > 10) {
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                    }
+                });
+
+                card.addEventListener('touchend', () => {
+                    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                });
+
+                card.addEventListener('mousedown', (e) => {
+                    isLongPress = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        triggerVibration();
+                        isCommissionSelectionMode = true;
+                        if (!selectedCommissionIds.includes(item.id)) selectedCommissionIds.push(item.id);
+                        renderRecycleView();
+                    }, 500);
+                });
+
+                card.addEventListener('mousemove', (e) => {
+                    if (!pressTimer) return;
+                    if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) {
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                    }
+                });
+
+                card.addEventListener('mouseup', () => {
+                    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                });
+
+                card.onclick = () => {
+                    if (isLongPress) return;
+                    if (isCommissionSelectionMode) {
+                        if (selectedCommissionIds.includes(item.id)) {
+                            selectedCommissionIds = selectedCommissionIds.filter(id => id !== item.id);
+                            if (selectedCommissionIds.length === 0) isCommissionSelectionMode = false;
+                        } else {
+                            selectedCommissionIds.push(item.id);
+                        }
+                        renderRecycleView();
+                    } else {
+                        openDetailPage(item.name, `ကော်ဆ ${item.comm} | လျှော်ကြေးဆ ${item.comp}`);
+                    }
+                };
+
+                const totalAmt = calculateAgentTotal(item.name);
+
+                card.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">${item.name}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="color:#22c55e; font-weight:700; font-size:1.1rem;">${totalAmt > 0 ? totalAmt.toLocaleString() : '0'}</span>
+                            ${isCommissionSelectionMode ? `<div class="custom-checkbox">${isSelected ? '✓' : ''}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="item-subtext">
+                        ကော်ဆ ${item.comm} | လျှော်ကြေးဆ ${item.comp}
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+
+            const bar = document.getElementById('selectionBar');
+            const countText = document.getElementById('selectedCountText');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+            if (isCommissionSelectionMode && selectedCommissionIds.length > 0) {
+                bar.classList.add('active');
+                countText.innerText = `${selectedCommissionIds.length} ခု ရွေးချယ်ထားသည်`;
+                if (selectedCommissionIds.length === commissionList.length) {
+                    selectAllCheckbox.innerText = '✓';
+                    selectAllCheckbox.style.background = '#f59e0b';
+                } else {
+                    selectAllCheckbox.innerText = '-';
+                    selectAllCheckbox.style.background = '#f59e0b';
+                }
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        function toggleSelectAllCommission() {
+            if (selectedCommissionIds.length === commissionList.length) {
+                selectedCommissionIds = [];
+                isCommissionSelectionMode = false;
+            } else {
+                selectedCommissionIds = commissionList.map(item => item.id);
+                isCommissionSelectionMode = true;
+            }
+            renderRecycleView();
+        }
+
+        function calculateVoucherCardTotal(amountText) {
+            const parsed = parse2DBetToNumbers(amountText);
+            let sum = 0;
+            parsed.forEach(item => {
+                sum += item.bet;
+            });
+            return sum;
+        }
+
+        function renderDetailVouchers(agentName) {
+            const listEl = document.getElementById('detailRecycleList');
+            listEl.innerHTML = '';
+
+            const records = voucherRecords[agentName] || [];
+
+            if (records.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:var(--subtext-color); margin-top:40px; font-size:1rem;">အချက်အလက် မရှိသေးပါ။</div>';
+                document.getElementById('detailSelectionBar').classList.remove('active');
+                isDetailSelectionMode = false;
+                return;
+            }
+
+            records.forEach((rec, index) => {
+                const card = document.createElement('div');
+                const isSelected = selectedDetailIndices.includes(index);
+                card.className = 'voucher-card' + (isSelected ? ' selected' : '');
+
+                let cardPressTimer = null;
+                let isCardLongPress = false;
+                let cardStartX = 0, cardStartY = 0;
+
+                card.addEventListener('touchstart', (e) => {
+                    isCardLongPress = false;
+                    cardStartX = e.touches[0].clientX;
+                    cardStartY = e.touches[0].clientY;
+                    cardPressTimer = setTimeout(() => {
+                        isCardLongPress = true;
+                        triggerVibration();
+                        isDetailSelectionMode = true;
+                        if (!selectedDetailIndices.includes(index)) selectedDetailIndices.push(index);
+                        renderDetailVouchers(agentName);
+                    }, 500);
+                });
+
+                card.addEventListener('touchmove', (e) => {
+                    if (!cardPressTimer) return;
+                    if (Math.abs(e.touches[0].clientX - cardStartX) > 10 || Math.abs(e.touches[0].clientY - cardStartY) > 10) {
+                        clearTimeout(cardPressTimer);
+                        cardPressTimer = null;
+                    }
+                });
+
+                card.addEventListener('touchend', () => {
+                    if (cardPressTimer) { clearTimeout(cardPressTimer); cardPressTimer = null; }
+                });
+
+                card.addEventListener('mousedown', (e) => {
+                    isCardLongPress = false;
+                    cardStartX = e.clientX;
+                    cardStartY = e.clientY;
+                    cardPressTimer = setTimeout(() => {
+                        isCardLongPress = true;
+                        triggerVibration();
+                        isDetailSelectionMode = true;
+                        if (!selectedDetailIndices.includes(index)) selectedDetailIndices.push(index);
+                        renderDetailVouchers(agentName);
+                    }, 500);
+                });
+
+                card.addEventListener('mouseup', () => {
+                    if (cardPressTimer) { clearTimeout(cardPressTimer); cardPressTimer = null; }
+                });
+
+                card.onclick = () => {
+                    if (isCardLongPress) return;
+                    if (isDetailSelectionMode) {
+                        if (selectedDetailIndices.includes(index)) {
+                            selectedDetailIndices = selectedDetailIndices.filter(i => i !== index);
+                            if (selectedDetailIndices.length === 0) isDetailSelectionMode = false;
+                        } else {
+                            selectedDetailIndices.push(index);
+                        }
+                        renderDetailVouchers(agentName);
+                    } else {
+                        openVoucherDetailDialog(agentName, index);
+                    }
+                };
+
+                const cardTotalAmt = calculateVoucherCardTotal(rec.amount);
+
+                card.innerHTML = `
+                    <div class="item-header">
+                        <span style="font-size: 1rem; font-weight: 600; color: #f59e0b;">${rec.timeLabel}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="color:#22c55e; font-weight:700; font-size:1.1rem;">${cardTotalAmt > 0 ? cardTotalAmt.toLocaleString() : '0'}</span>
+                            ${isDetailSelectionMode ? `<div class="custom-checkbox">${isSelected ? '✓' : ''}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="item-subtext" style="color:#22c55e; font-weight:600;">${rec.amount}</div>
+                `;
+                listEl.appendChild(card);
+            });
+
+            const bar = document.getElementById('detailSelectionBar');
+            const countText = document.getElementById('detailSelectedCountText');
+            const selectAllCheckbox = document.getElementById('detailSelectAllCheckbox');
+
+            if (isDetailSelectionMode && selectedDetailIndices.length > 0) {
+                bar.classList.add('active');
+                countText.innerText = `${selectedDetailIndices.length} ခု ရွေးချယ်ထားသည်`;
+                if (selectedDetailIndices.length === records.length) {
+                    selectAllCheckbox.innerText = '✓';
+                    selectAllCheckbox.style.background = '#f59e0b';
+                } else {
+                    selectAllCheckbox.innerText = '-';
+                    selectAllCheckbox.style.background = '#f59e0b';
+                }
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        function toggleSelectAllDetail() {
+            const records = voucherRecords[currentDetailName] || [];
+            if (selectedDetailIndices.length === records.length) {
+                selectedDetailIndices = [];
+                isDetailSelectionMode = false;
+            } else {
+                selectedDetailIndices = records.map((_, idx) => idx);
+                isDetailSelectionMode = true;
+            }
+            renderDetailVouchers(currentDetailName);
+        }
+
+        function normalize2DText(rawText) {
+            if (!rawText) return '';
+            
+            const mmDigits = {'၀':'0','၁':'1','၂':'2','၃':'3','၄':'4','၅':'5','၆':'6','၇':'7','၈':'8','၉':'9'};
+            let t = rawText.replace(/[၀-၉]/g, m => mmDigits[m]);
+            t = t.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+            const replacements = [
+                [/123sfr|sfr|စုံ‌ရှေ့|စုံရှေ့/gi, 'စုံရှေ့'],
+                [/123sb|sb|စုံနောက်/gi, 'စုံနောက်'],
+                [/123mfr|mfr|မ‌ရှေ့|မရှေ့/gi, 'မရှေ့'],
+                [/123mb|mb|မနောက်/gi, 'မနောက်'],
+                [/apr|အပါ/gi, 'အပါ'],
+                [/nak|ညီကို/gi, 'ညီကို'],
+                [/kp|ခွေပူး/gi, 'ခွေပူး'],
+                [/ak|Qw|အခွေ/gi, 'အခွေ'],
+                [/ss|စုံစုံ/gi, 'စုံစုံ'],
+                [/mm|မမ/gi, 'မမ'],
+                [/sm|စုံမ/gi, 'စုံမ'],
+                [/ms|မစုံ/gi, 'မစုံ'],
+                [/sp|စုံပူး/gi, 'စုံပူး'],
+                [/mp|မပူး/gi, 'မပူး'],
+                [/ap|အပူး/gi, 'အပူး'],
+                [/pw|ပါဝါ/gi, 'ပါဝါ'],
+                [/br|ဘရိတ်/gi, 'ဘရိတ်'],
+                [/pa|ပိတ်/gi, 'ပိတ်'],
+                [/nk|နတ္ခတ်|နက္ခတ်/gi, 'နက္ခတ်'],
+                [/ဒိုင်ပိတ်/g, 'ပိတ်'],
+                [/t|ထိပ်/gi, 'ထိပ်'],
+                [/k|ကပ်/gi, 'ကပ်'],
+                [/d|ဒဲ့/gi, 'ဒဲ့'],
+                [/r|အာ/gi, 'အာ'],
+                [/p|ပတ်/gi, 'ပတ်']
+            ];
+
+            replacements.forEach(([regex, replacement]) => {
+                t = t.replace(regex, replacement);
+            });
+
+            return t;
+        }
+
+        function cleanAndParsePastedText(rawText) {
+            if (!rawText) return '';
+            let normalized = normalize2DText(rawText);
+            
+            normalized = normalized.replace(/([0-9.]+)ဒဲ့(\d+)အာ(\d+)/g, '$1ဒဲ့$2, $1အာ$3');
+
+            let lines = normalized.split(/[\n,]+/);
+            let cleanedItems = [];
+
+            lines.forEach(line => {
+                let trimmed = line.trim();
+                if (!trimmed) return;
+
+                if (/(ထိပ်|ပိတ်|ဘရိတ်|ပါဝါ|နက္ခတ်|ပတ်|အပါ|ကပ်|ဒဲ့|အာ|အခွေ|ခွေပူး|အပူး|စုံစုံ|မမ|စုံမ|မစုံ|စုံပူး|မပူး|ညီကို|စုံရှေ့|စုံနောက်|မရှေ့|မနောက်|All|\d)/i.test(trimmed)) {
+                    cleanedItems.push(trimmed);
+                }
+            });
+
+            return cleanedItems.join(', ');
+        }
+
+        function parse2DBetToNumbers(text) {
+            let items = [];
+            if (!text) return items;
+
+            let normalized = normalize2DText(text);
+            normalized = normalized.replace(/([0-9.]+)ဒဲ့(\d+)အာ(\d+)/g, '$1ဒဲ့$2, $1အာ$3');
+
+            let lines = normalized.split(/[\n,]+/);
+            let validSegments = [];
+
+            lines.forEach(line => {
+                let trimmed = line.trim();
+                if (!trimmed) return;
+                if (/(ထိပ်|ပိတ်|ဘရိတ်|ပါဝါ|နက္ခတ်|ပတ်|အပါ|ကပ်|ဒဲ့|အာ|အခွေ|ခွေပူး|အပူး|စုံစုံ|မမ|စုံမ|မစုံ|စုံပူး|မပူး|ညီကို|စုံရှေ့|စုံနောက်|မရှေ့|မနောက်|All|\d)/i.test(trimmed)) {
+                    validSegments.push(trimmed);
+                }
+            });
+
+            let map = new Map();
+
+            function addNum(numStr, betAmt) {
+                if (!/^\d{2}$/.test(numStr)) return;
+                if (map.has(numStr)) {
+                    map.set(numStr, map.get(numStr) + betAmt);
+                } else {
+                    map.set(numStr, betAmt);
+                }
+            }
+
+            validSegments.forEach(part => {
+                part = part.replace(/\s+/g, '');
+                if (!part) return;
+
+                let keywordMatch = part.match(/^([0-9.]+)?(အခွေ|ခွေပူး|ထိပ်|ပိတ်|ဘရိတ်|ပါဝါ|နက္ခတ်|ပတ်|အပါ|ကပ်|ဒဲ့|အာ|စုံရှေ့|စုံနောက်|မရှေ့|မနောက်)(-?\d+)?$/);
+                if (keywordMatch) {
+                    let prefix = keywordMatch[1] || "";
+                    let keyword = keywordMatch[2];
+                    let amount = Math.abs(parseFloat(keywordMatch[3])) || 1000;
+                    let tempNums = new Set();
+
+                    if (keyword === 'ဒဲ့') {
+                        if (prefix.includes('.')) {
+                            prefix.split('.').forEach(p => { if (/^\d{2}$/.test(p)) tempNums.add(p); });
+                        } else if (/^\d{2}$/.test(prefix)) {
+                            tempNums.add(prefix);
+                        } else if (prefix.length > 2 && prefix.length % 2 === 0) {
+                            for (let i = 0; i < prefix.length; i += 2) tempNums.add(prefix.slice(i, i + 2));
+                        }
+                    } else if (keyword === 'အာ') {
+                        let pairs = [];
+                        if (prefix.includes('.')) {
+                            pairs = prefix.split('.').filter(p => /^\d{2}$/.test(p));
+                        } else if (/^\d{2}$/.test(prefix)) {
+                            pairs = [prefix];
+                        } else if (prefix.length > 2 && prefix.length % 2 === 0) {
+                            for (let i = 0; i < prefix.length; i += 2) pairs.push(prefix.slice(i, i + 2));
+                        }
+                        pairs.forEach(p => {
+                            let rev = p.split('').reverse().join('');
+                            tempNums.add(rev);
+                        });
+                    } else if (keyword === 'အခွေ' || keyword === 'ခွေပူး') {
+                        let digits = Array.from(new Set(prefix.replace(/\./g, '').split('').filter(c => /\d/.test(c))));
+                        for (let i = 0; i < digits.length; i++) {
+                            for (let j = 0; j < digits.length; j++) {
+                                if (keyword === 'အခွေ' && i === j) continue;
+                                tempNums.add(digits[i] + digits[j]);
+                            }
+                        }
+                    } else if (keyword === 'ကပ်') {
+                        let digits = Array.from(new Set(prefix.replace(/\./g, '').split('').filter(c => /\d/.test(c))));
+                        if (digits.length >= 2) {
+                            for (let i = 0; i < digits.length; i++) {
+                                for (let j = 0; j < digits.length; j++) {
+                                    if (i !== j) tempNums.add(digits[i] + digits[j]);
+                                }
+                            }
+                        } else if (digits.length === 1) {
+                            let n = parseInt(digits[0]);
+                            let neighbors = [(n + 9) % 10, (n + 1) % 10];
+                            neighbors.forEach(nbr => {
+                                tempNums.add(digits[0] + nbr);
+                                tempNums.add(nbr + digits[0]);
+                            });
+                        }
+                    } else if (keyword === 'ထိပ်') {
+                        let digits = prefix ? prefix.replace(/\./g, '').split('') : ['0','1','2','3','4','5','6','7','8','9'];
+                        digits.forEach(d => {
+                            if (/\d/.test(d)) for (let i = 0; i <= 9; i++) tempNums.add(d + i);
+                        });
+                    } else if (keyword === 'ပိတ်') {
+                        let digits = prefix ? prefix.replace(/\./g, '').split('') : ['0','1','2','3','4','5','6','7','8','9'];
+                        digits.forEach(d => {
+                            if (/\d/.test(d)) for (let i = 0; i <= 9; i++) tempNums.add(i + d);
+                        });
+                    } else if (keyword === 'ပတ်') {
+                        let digits = prefix ? prefix.replace(/\./g, '').split('') : ['0','1','2','3','4','5','6','7','8','9'];
+                        digits.forEach(d => {
+                            if (/\d/.test(d)) {
+                                for (let i = 0; i <= 9; i++) {
+                                    tempNums.add(d + i);
+                                    tempNums.add(i + d);
+                                }
+                            }
+                        });
+                    } else if (keyword === 'အပါ') {
+                        let digits = prefix ? prefix.replace(/\./g, '').split('') : ['0','1','2','3','4','5','6','7','8','9'];
+                        digits.forEach(d => {
+                            if (/\d/.test(d)) {
+                                for (let i = 0; i < 100; i++) {
+                                    let s = i.toString().padStart(2, '0');
+                                    if (s.includes(d)) tempNums.add(s);
+                                }
+                            }
+                        });
+                    } else if (keyword === 'ဘရိတ်') {
+                        let digits = prefix ? prefix.replace(/\./g, '').split('') : ['0','1','2','3','4','5','6','7','8','9'];
+                        digits.forEach(d => {
+                            if (/\d/.test(d)) {
+                                let b = parseInt(d);
+                                for (let i = 0; i < 100; i++) {
+                                    let s = i.toString().padStart(2, '0');
+                                    let sum = (parseInt(s[0]) + parseInt(s[1])) % 10;
+                                    if (sum === b) tempNums.add(s);
+                                }
+                            }
+                        });
+                    } else if (keyword === 'စုံရှေ့') {
+                        let evens = ['0','2','4','6','8'];
+                        let backs = prefix ? prefix.replace(/\./g, '').split('').filter(c => /\d/.test(c)) : ['0','1','2','3','4','5','6','7','8','9'];
+                        evens.forEach(e => backs.forEach(b => tempNums.add(e + b)));
+                    } else if (keyword === 'စုံနောက်') {
+                        let evens = ['0','2','4','6','8'];
+                        let fronts = prefix ? prefix.replace(/\./g, '').split('').filter(c => /\d/.test(c)) : ['0','1','2','3','4','5','6','7','8','9'];
+                        fronts.forEach(f => evens.forEach(e => tempNums.add(f + e)));
+                    } else if (keyword === 'မရှေ့') {
+                        let odds = ['1','3','5','7','9'];
+                        let backs = prefix ? prefix.replace(/\./g, '').split('').filter(c => /\d/.test(c)) : ['0','1','2','3','4','5','6','7','8','9'];
+                        odds.forEach(o => backs.forEach(b => tempNums.add(o + b)));
+                    } else if (keyword === 'မနောက်') {
+                        let odds = ['1','3','5','7','9'];
+                        let fronts = prefix ? prefix.replace(/\./g, '').split('').filter(c => /\d/.test(c)) : ['0','1','2','3','4','5','6','7','8','9'];
+                        fronts.forEach(f => odds.forEach(o => tempNums.add(f + o)));
+                    } else if (keyword === 'ပါဝါ') {
+                        ['05','50','16','61','27','72','38','83','49','94'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'နက္ခတ်') {
+                        ['07','70','18','81','24','42','35','53','69','96'].forEach(n => tempNums.add(n));
+                    }
+
+                    tempNums.forEach(numStr => addNum(numStr, amount));
+                    return;
+                }
+
+                let match = part.match(/^(အပူး|ပါဝါ|စုံစုံ|မမ|စုံမ|မစုံ|စုံပူး|မပူး|ညီကို|နက္ခတ်|စုံရှေ့|စုံနောက်|မရှေ့|မနောက်|All)(-?[0-9]*)$/);
+                if (match) {
+                    let keyword = match[1];
+                    let amount = Math.abs(parseFloat(match[2])) || 1000;
+                    let tempNums = new Set();
+
+                    if (keyword === 'All') {
+                        for (let i = 0; i < 100; i++) tempNums.add(i.toString().padStart(2, '0'));
+                    } else if (keyword === 'အပူး') {
+                        ['00','11','22','33','44','55','66','77','88','99'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'စုံစုံ') {
+                        ['00','02','04','06','08','20','22','24','26','28','40','42','44','46','48','60','62','64','66','68','80','82','84','86','88'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'မမ') {
+                        ['11','13','15','17','19','31','33','35','37','39','51','53','55','57','59','71','73','75','77','79','91','93','95','97','99'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'စုံမ') {
+                        ['01','03','05','07','09','21','23','25','27','29','41','43','45','47','49','61','63','65','67','69','81','83','85','87','89'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'မစုံ') {
+                        ['10','12','14','16','18','30','32','34','36','38','50','52','54','56','58','70','72','74','76','78','90','92','94','96','98'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'စုံပူး') {
+                        ['00','22','44','66','88'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'မပူး') {
+                        ['11','33','55','77','99'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'ပါဝါ') {
+                        ['05','50','16','61','27','72','38','83','49','94'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'နက္ခတ်') {
+                        ['07','70','18','81','24','42','35','53','69','96'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'ညီကို') {
+                        ['01','10','12','21','23','32','34','43','45','54','56','65','67','76','78','87','89','98','90','09'].forEach(n => tempNums.add(n));
+                    } else if (keyword === 'စုံရှေ့') {
+                        ['0','2','4','6','8'].forEach(d => { for (let i=0; i<=9; i++) tempNums.add(d + i); });
+                    } else if (keyword === 'စုံနောက်') {
+                        ['0','2','4','6','8'].forEach(d => { for (let i=0; i<=9; i++) tempNums.add(i + d); });
+                    } else if (keyword === 'မရှေ့') {
+                        ['1','3','5','7','9'].forEach(d => { for (let i=0; i<=9; i++) tempNums.add(d + i); });
+                    } else if (keyword === 'မနောက်') {
+                        ['1','3','5','7','9'].forEach(d => { for (let i=0; i<=9; i++) tempNums.add(i + d); });
+                    }
+
+                    tempNums.forEach(numStr => addNum(numStr, amount));
+                    return;
+                }
+
+                let dashMatch = part.match(/^([0-9.]+)[-|=](-?\d+)$/);
+                if (dashMatch) {
+                    let numPart = dashMatch[1];
+                    let amt = Math.abs(parseFloat(dashMatch[2])) || 1000;
+                    if (numPart.includes('.')) {
+                        numPart.split('.').forEach(p => { if (/^\d{2}$/.test(p)) addNum(p, amt); });
+                    } else if (numPart.length === 2) {
+                        addNum(numPart, amt);
+                    }
+                    return;
+                }
+
+                let cleanNum = part.replace(/\D/g, '');
+                if (cleanNum.length === 2) {
+                    addNum(cleanNum, 1000);
+                }
+            });
+
+            map.forEach((bet, num) => {
+                items.push({ num: num, bet: bet });
+            });
+
+            return items;
+        }
+
+        async function openPasteDialog() {
+            document.getElementById('pasteDialogInput').value = '';
+            openOverlayUI('pasteCustomDialog');
+            
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    document.getElementById('pasteDialogInput').value = text;
+                }
+            } catch (err) {}
+        }
+
+        function confirmAndCleanPasteData() {
+            const rawText = document.getElementById('pasteDialogInput').value;
+            if (!rawText.trim()) {
+                showCustomAlert('ကျေးဇူးပြု၍ Paste လုပ်ရန် စာသား ထည့်ပါ');
+                return;
+            }
+
+            const cleanedText = cleanAndParsePastedText(rawText);
+            const inputEl = document.getElementById('sheetAmountInput');
+            
+            if (cleanedText) {
+                inputEl.value += (inputEl.value ? ', ' : '') + cleanedText;
+                showToast('စာရင်းများ အောင်မြင်စွာ ဝင်ရောက်သွားပါပြီ');
+            } else {
+                showCustomAlert('2D ထိုးအသုံးအနှုန်းများနှင့် ကိုက်ညီသော စာသား မတွေ့ရှိပါ။');
+            }
+
+            closeOverlayUI('pasteCustomDialog');
+        }
+
+        function previewVoucherDetails() {
+            const amountText = document.getElementById('sheetAmountInput').value.trim();
+            
+            if (!amountText) {
+                showCustomAlert('ကျေးဇူးပြု၍ ဂဏန်း သို့မဟုတ် ထိုးကြေး ထည့်ပါ');
+                return;
+            }
+
+            const activeAgent = currentSelectedAgentForSheet;
+            document.getElementById('pvPlayerName').innerText = `${activeAgent} (စစ်ဆေးရန်)`;
+
+            const contentList = document.getElementById('pvContentList');
+            contentList.innerHTML = '';
+
+            const parsedBets = parse2DBetToNumbers(amountText);
+            let totalAmount = 0;
+
+            parsedBets.forEach(item => {
+                totalAmount += item.bet;
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; background:var(--row-bg); padding:8px 12px; border-radius:6px; border:1px solid var(--card-border); font-size:0.95rem; flex-shrink:0;';
+                row.innerHTML = `
+                    <span style="color:#f59e0b; font-weight:bold;">${item.num}</span> 
+                    <span style="color:#22c55e; font-weight:600;">${item.bet > 0 ? item.bet.toLocaleString() : '-'}</span>
+                `;
+                contentList.appendChild(row);
+            });
+
+            document.getElementById('pvSummaryBar').innerHTML = `
+                <span><strong style="font-size:1.1rem; color:var(--text-color); font-weight:bold;">${parsedBets.length} ကွက်</strong></span>
+                <span><strong style="font-size:1.1rem; color:#22c55e; font-weight:bold;">${totalAmount.toLocaleString()}</strong></span>
+            `;
+
+            openOverlayUI('previewVoucherDialog');
+        }
+
+        function confirmAndSaveVoucher() {
+            const agentName = currentSelectedAgentForSheet;
+            const amountText = document.getElementById('sheetAmountInput').value.trim();
+
+            if (!voucherRecords[agentName]) {
+                voucherRecords[agentName] = [];
+            }
+
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = hours % 12 || 12;
+            const timeStr = (hours < 12) ? 'မနက်ပိုင်း' : 'ညနေပိုင်း';
+            const fullTimeLabel = `${timeStr} (${formattedHours}:${minutes} ${ampm})`;
+
+            voucherRecords[agentName].unshift({
+                playerName: 'စာရင်း',
+                amount: amountText,
+                timeLabel: fullTimeLabel
+            });
+
+            saveDataToStorage();
+
+            closeOverlayUI('previewVoucherDialog');
+            document.getElementById('sheetAmountInput').value = ''; 
+            showToast('ဘောင်ချာ အောင်မြင်စွာ သိမ်းပြီးပါပြီ');
+            
+            if (currentActivePage === 'detail') {
+                renderDetailVouchers(currentDetailName);
+            }
+        }
+
+        function openVoucherDetailDialog(agentName, index) {
+            const rec = voucherRecords[agentName][index];
+            document.getElementById('vdPlayerName').innerText = `${rec.timeLabel} စာရင်း`;
+            
+            const contentList = document.getElementById('vdContentList');
+            contentList.innerHTML = '';
+
+            const parsedBets = parse2DBetToNumbers(rec.amount);
+            let totalAmount = 0;
+
+            parsedBets.forEach(item => {
+                totalAmount += item.bet;
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; background:var(--row-bg); padding:8px 12px; border-radius:6px; border:1px solid var(--card-border); font-size:0.95rem; flex-shrink:0;';
+                row.innerHTML = `
+                    <span style="color:#f59e0b; font-weight:bold;">${item.num}</span> 
+                    <span style="color:#22c55e; font-weight:600;">${item.bet > 0 ? item.bet.toLocaleString() : '-'}</span>
+                `;
+                contentList.appendChild(row);
+            });
+
+            document.getElementById('vdSummaryBar').innerHTML = `
+                <span><strong style="font-size:1.1rem; color:var(--text-color); font-weight:bold;">${parsedBets.length} ကွက်</strong></span>
+                <span><strong style="font-size:1.1rem; color:#22c55e; font-weight:bold;">${totalAmount.toLocaleString()}</strong></span>
+            `;
+
+            openOverlayUI('voucherDetailDialog');
+        }
+
+        function handleFabClick() {
+            if (currentActivePage === 'commission') {
+                openAddCommissionDialog();
+            } else if (currentActivePage === 'detail') {
+                openBottomSheet(currentDetailName);
+            }
+        }
+
+        function openCustomDropdown() {
+            const listEl = document.getElementById('customDropdownList');
+            listEl.innerHTML = '';
+            commissionList.forEach(item => {
+                const btn = document.createElement('div');
+                btn.style.cssText = 'background:var(--selection-bg); border:1px solid var(--card-border); color:var(--text-color); padding:12px 14px; border-radius:8px; font-weight:bold; font-size:1.05rem; cursor:pointer; text-align:center; flex-shrink:0;';
+                if (item.name === currentSelectedAgentForSheet) {
+                    btn.style.borderColor = '#f59e0b';
+                    btn.style.color = '#f59e0b';
+                }
+                btn.innerText = item.name;
+                btn.onclick = () => {
+                    currentSelectedAgentForSheet = item.name;
+                    document.getElementById('sheetSelectedName').innerText = item.name;
+                    closeOverlayUI('customDropdownDialog');
+                };
+                listEl.appendChild(btn);
+            });
+            openOverlayUI('customDropdownDialog');
+        }
+
+        function openBottomSheet(headerTitle) {
+            currentSelectedAgentForSheet = headerTitle;
+            document.getElementById('sheetSelectedName').innerText = headerTitle;
+            document.getElementById('sheetAmountInput').value = '';
+            openOverlayUI('bottomSheet');
+        }
+
+        document.querySelectorAll('#keypadGrid .key-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const val = this.getAttribute('data-val');
+                const inputEl = document.getElementById('sheetAmountInput');
+                
+                if (val === '×') {
+                    let currentVal = inputEl.value;
+                    if (currentVal.length > 0) {
+                        inputEl.value = currentVal.slice(0, -1);
+                    }
+                } else if (val === 'All') {
+                    inputEl.value = '';
+                } else {
+                    inputEl.value += val;
+                }
+            });
+        });
+
+        function openAddCommissionDialog() {
+            document.getElementById('inputCommName').value = '';
+            openOverlayUI('addCommissionDialog');
+        }
+
+        function openGlobalResetDialog() {
+            openOverlayUI('globalResetDialog');
+        }
+
+        function confirmGlobalReset() {
+            voucherRecords = {};
+            commissionList.forEach(item => {
+                voucherRecords[item.name] = [];
+            });
+            submittedDealerRecords = {};
+            saveDataToStorage();
+            closeOverlayUI('globalResetDialog');
+            
+            if (currentActivePage === 'commission') {
+                renderRecycleView();
+            } else if (currentActivePage === 'tinkwet') {
+                renderTinkwetPage();
+            } else if (currentActivePage === 'voucherMain') {
+                renderLedgerMainPage();
+            } else if (currentActivePage === 'summary') {
+                renderSummaryResults();
+            } else if (currentActivePage === 'detail') {
+                renderDetailVouchers(currentDetailName);
+            }
+            showToast('ဒေတာများ အားလုံး အောင်မြင်စွာ ဖျက်ပြီးပါပြီ');
+        }
+
+        function showCustomAlert(msg) {
+            document.getElementById('alertMessage').innerText = msg;
+            openOverlayUI('alertDialog');
+        }
+
+        function saveCommission() {
+            let rawInput = document.getElementById('inputCommName').value.trim();
+
+            if (!rawInput) {
+                showCustomAlert('ကျေးဇူးပြု၍ အချက်အလက် ထည့်ပါ');
+                return;
+            }
+
+            const mmDigits = {'၀':'0','၁':'1','၂':'2','၃':'3','၄':'4','၅':'5','၆':'6','၇':'7','၈':'8','၉':'9'};
+            let normalizedInput = rawInput.replace(/[၀-၉]/g, m => mmDigits[m]);
+
+            let entries = normalizedInput.split(',');
+            let addedCount = 0;
+
+            entries.forEach(entry => {
+                let trimmed = entry.trim();
+                if (!trimmed) return;
+
+                let name = '';
+                let comm = '15%'; 
+                let comp = '80';  
+
+                let match = trimmed.match(/^(.+?)([0-9]{4})$/) || trimmed.match(/^([0-9]{4})(.+?)$/);
+
+                if (match) {
+                    if (match[1].length === 4 && /^\d{4}$/.test(match[1])) {
+                        let digits = match[1];
+                        comm = digits.substring(0, 2) + '%';
+                        comp = parseInt(digits.substring(2)).toString();
+                        name = match[2].trim();
+                    } else {
+                        name = match[1].trim();
+                        let digits = match[2];
+                        comm = digits.substring(0, 2) + '%';
+                        comp = parseInt(digits.substring(2)).toString();
+                    }
+                } else {
+                    let genericMatch = trimmed.match(/^(.+?)([0-9]+)$/);
+                    if (genericMatch) {
+                        name = genericMatch[1].trim();
+                        let digits = genericMatch[2];
+                        if (digits.length >= 2) {
+                            comm = digits.substring(0, 2) + '%';
+                            comp = digits.length > 2 ? parseInt(digits.substring(2)).toString() : '80';
+                        } else {
+                            comm = digits + '%';
+                            comp = '80';
+                        }
+                    } else {
+                        name = trimmed;
+                        comm = '15%';
+                        comp = '80';
+                    }
+                }
+
+                if (name) {
+                    commissionList.unshift({ id: Date.now() + Math.random(), name: name, comm: comm, comp: comp });
+                    if (!voucherRecords[name]) {
+                        voucherRecords[name] = [];
+                    }
+                    addedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                saveDataToStorage();
+                closeOverlayUI('addCommissionDialog');
+                renderRecycleView();
+            } else {
+                showCustomAlert('မှန်ကန်သော ပုံစံဖြင့် ထည့်သွင်းပါ');
+            }
+        }
+
+        function openDeleteDialog(type) {
+            deleteTargetType = type;
+            if (type === 'commission' && selectedCommissionIds.length === 0) return;
+            if (type === 'detail' && selectedDetailIndices.length === 0) return;
+            if (type === 'tinkwet' && selectedTinkwetIndices.length === 0) return;
+
+            const count = (type === 'commission') ? selectedCommissionIds.length : 
+                          (type === 'detail') ? selectedDetailIndices.length : selectedTinkwetIndices.length;
+            document.getElementById('deleteDialogTitle').innerText = `ရွေးချယ်ထားသော (${count}) ခုကို ဖျက်မှာ သေချာပါသလား?`;
+            openOverlayUI('deleteDialog');
+        }
+
+        function confirmDelete() {
+            if (deleteTargetType === 'commission') {
+                commissionList = commissionList.filter(item => !selectedCommissionIds.includes(item.id));
+                selectedCommissionIds = [];
+                isCommissionSelectionMode = false;
+                saveDataToStorage();
+                renderRecycleView();
+            } else if (deleteTargetType === 'detail') {
+                let records = voucherRecords[currentDetailName] || [];
+                voucherRecords[currentDetailName] = records.filter((_, idx) => !selectedDetailIndices.includes(idx));
+                selectedDetailIndices = [];
+                isDetailSelectionMode = false;
+                saveDataToStorage();
+                renderDetailVouchers(currentDetailName);
+            } else if (deleteTargetType === 'tinkwet') {
+                let dealerNames = Object.keys(submittedDealerRecords);
+                let newDealerRecords = {};
+                dealerNames.forEach((name, idx) => {
+                    if (!selectedTinkwetIndices.includes(idx)) {
+                        newDealerRecords[name] = submittedDealerRecords[name];
+                    }
+                });
+                submittedDealerRecords = newDealerRecords;
+                selectedTinkwetIndices = [];
+                isTinkwetSelectionMode = false;
+                saveDataToStorage();
+                renderTinkwetPage();
+            }
+            closeOverlayUI('deleteDialog');
+        }
+    </script>
+</body>
+</html>
